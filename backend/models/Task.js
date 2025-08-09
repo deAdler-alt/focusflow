@@ -6,7 +6,7 @@ const checklistItemSchema = new mongoose.Schema({
   completed: { type: Boolean, default: false }
 });
 
-// Definiujemy główny schemat dla zadania
+// Definiujemy główny schemat dla zadania, uwzględniając wszystkie nasze planowane pola
 const taskSchema = new mongoose.Schema({
   text: {
     type: String,
@@ -19,35 +19,21 @@ const taskSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    default: 'todo' // Domyślny status to "Do zrobienia"
+    default: 'todo'
   },
   isArchived: {
     type: Boolean,
-    default: false // Domyślnie zadanie nie jest zarchiwizowane
+    default: false
   },
   dueDate: {
     type: Date,
-    default: null // Data ukończenia, domyślnie pusta
+    default: null
   },
-  checklist: [checklistItemSchema], // Tablica z elementami checklisty
+  checklist: [checklistItemSchema],
   createdAt: {
     type: Date,
-    default: Date.now // Automatyczna data utworzenia
+    default: Date.now
   }
 });
-
-// ... (istniejące endpointy GET, POST, PUT, POST /archive-done) ...
-
-// NOWY ENDPOINT: Pobiera wszystkie zadania (również zarchiwizowane), które mają ustawioną datę
-router.get('/calendar', async (req, res) => {
-    try {
-        const tasks = await Task.find({ dueDate: { $ne: null } }); // Znajdź zadania, gdzie `dueDate` nie jest puste
-        res.json(tasks);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-module.exports = router;
 
 module.exports = mongoose.model('Task', taskSchema);
