@@ -1,19 +1,18 @@
-// backend/routes/tasks.js
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
 
-// GET: Pobierz wszystkie aktywne zadania
+// GET: Pobierz wszystkie aktywne zadania dla tablicy Kanban
 router.get('/', async (req, res) => {
   try {
-    const tasks = await Task.find({ isArchived: false }).sort({ createdAt: -1 }); // Sortujemy od najnowszych
+    const tasks = await Task.find({ isArchived: false }).sort({ createdAt: -1 });
     res.json(tasks);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// GET: Endpoint dla kalendarza (bez zmian)
+// GET: Pobierz wszystkie zadania z datą dla kalendarza
 router.get('/calendar', async (req, res) => {
     try {
         const tasks = await Task.find({ dueDate: { $ne: null } });
@@ -44,7 +43,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// NOWY ENDPOINT: Usuń zadanie
+// DELETE: Usuń zadanie
 router.delete('/:id', async (req, res) => {
     try {
         await Task.findByIdAndDelete(req.params.id);

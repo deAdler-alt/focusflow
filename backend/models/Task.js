@@ -1,15 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const Task = require('../models/Task');
-// backend/models/Task.js
-
 const mongoose = require('mongoose');
 
+// Definiujemy schemat dla pojedynczego elementu na checkliście
 const checklistItemSchema = new mongoose.Schema({
   text: String,
   completed: { type: Boolean, default: false }
 });
 
+// Definiujemy główny schemat dla zadania
 const taskSchema = new mongoose.Schema({
   text: {
     type: String,
@@ -22,70 +19,35 @@ const taskSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    default: 'todo'
+    default: 'todo' // Domyślny status to "Do zrobienia"
   },
-  isArchived: { // <-- NOWE POLE
+  isArchived: {
     type: Boolean,
-    default: false
+    default: false // Domyślnie zadanie nie jest zarchiwizowane
   },
   dueDate: {
     type: Date,
-    default: null
+    default: null // Data ukończenia, domyślnie pusta
   },
-  checklist: [checklistItemSchema],
+  checklist: [checklistItemSchema], // Tablica z elementami checklisty
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now // Automatyczna data utworzenia
   }
 });
 
-module.exports = mongoose.model('Task', taskSchema);
+// ... (istniejące endpointy GET, POST, PUT, POST /archive-done) ...
 
-// ZMIANA TUTAJ: Teraz pobieramy tylko zadania, które NIE SĄ zarchiwizowane
-router.get('/', async (req, res) => {
-  try {
-    const tasks = await Task.find({ isArchived: false }); // <-- Dodajemy filtr
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Endpoint POST pozostaje bez zmian
-router.post('/', async (req, res) => {
-  const task = new Task({
-    text: req.body.text,
-    status: req.body.status || 'todo'
-  });
-  try {
-    const newTask = await task.save();
-    res.status(201).json(newTask);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Endpoint PUT pozostaje bez zmian
-router.put('/:id', async (req, res) => {
+// NOWY ENDPOINT: Pobiera wszystkie zadania (również zarchiwizowane), które mają ustawioną datę
+router.get('/calendar', async (req, res) => {
     try {
-        const updatedTask = await Task.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
-        res.json(updatedTask);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
-
-// NOWY ENDPOINT: Archiwizuje wszystkie zadania, które są w kolumnie "Zrobione"
-router.post('/archive-done', async (req, res) => {
-    try {
-        await Task.updateMany(
-            { status: 'done', isArchived: false },
-            { $set: { isArchived: true } }
-        );
-        res.status(200).json({ message: 'Ukończone zadania zostały zarchiwizowane.' });
+        const tasks = await Task.find({ dueDate: { $ne: null } }); // Znajdź zadania, gdzie `dueDate` nie jest puste
+        res.json(tasks);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
 module.exports = router;
+
+module.exports = mongoose.model('Task', taskSchema);
